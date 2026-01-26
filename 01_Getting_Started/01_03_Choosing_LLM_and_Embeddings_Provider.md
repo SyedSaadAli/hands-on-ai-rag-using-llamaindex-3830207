@@ -36,31 +36,115 @@ With countless other providers continuously entering the market and trying to ca
 
 LlamaIndex has integrations with dozens of LLM and Embeddings providers. You can see them all [here](https://github.com/run-llama/llama_index/tree/main/llama-index-integrations/llms).
 
-Whatever you end up choosing, the installation process will go something like this:
+## Recommended: Cohere Setup
+
+For this course, we recommend using **Cohere** as your primary LLM provider. Here's how to set it up:
+
+### Installation
 
 ```bash
-pip install llama-index-llms-<whatever-llm-provider-you-choose>
+# Install Cohere LLM integration for LlamaIndex
+pip install llama-index-llms-cohere
+
+# Install Cohere embeddings integration
+pip install llama-index-embeddings-cohere
+
+# Install Cohere SDK (if not already installed)
+# Note: Version 5.20.2+ recommended (includes rerank v3.5 support)
+pip install cohere==5.20.2
 ```
 
-To instantiate the LLM, it will follow a pattern as shown below. Note that `LLMSProviderClass` is just a placeholder. Your chosen LLM provider will have some classes you need to import.
+> **Note**: If you've already run the `install.sh` script, these packages are already installed with the correct versions.
+
+### Basic Usage
 
 ```python
+from llama_index.llms.cohere import Cohere
+from llama_index.embeddings.cohere import CohereEmbedding
+from llama_index.core.llms import ChatMessage
+from dotenv import load_dotenv
+import os
 
-from llama_index.llms.<whatever-llm-provider-you-choose> import  LLMSProviderClass
+# Load environment variables from .env file
+load_dotenv()
 
-llm = LLMSProviderClass(api_key = your_api_key, model="whatever-model-you-want-to-use")
+# Initialize the LLM
+# Note: Cohere deprecated old model names (Sept 2025) - use versioned models
+llm = Cohere(
+    api_key=os.getenv("CO_API_KEY"),  # Reads from .env file
+    model="command-a-03-2025"  # BEST FOR RAG: 256K context, excels at RAG, 150% higher throughput
+    # Other RAG options:
+    # - "command-a-reasoning-08-2025" (256K context, 32K output - best for complex RAG)
+    # - "command-r-plus-08-2024" (128K context, RAG-optimized, proven)
+    # - "command-r7b-12-2024" (128K context, fast & efficient)
+    # - "command-r-08-2024" (128K context, faster/cheaper)
+)
 
+# Initialize embeddings
+embeddings = CohereEmbedding(
+    api_key=os.getenv("CO_API_KEY"),  # Reads from .env file
+    model_name="embed-english-v3.0"  # or "embed-multilingual-v3.0" for multilingual
+)
+
+# Use chat() method instead of complete() - Cohere migrated to Chat API
+# chat() requires a list of ChatMessage objects, not a plain string
+messages = [
+    ChatMessage(role="user", content="Hello! Can you hear me?")
+]
+response = llm.chat(messages)
+print(response.message.content)
 ```
 
-## We'll primarily use the Cohere API in this course.
+> **Important**: 
+> - Cohere deprecated the `generate` API and old model names on September 15, 2025
+> - Use `llm.chat()` instead of `llm.complete()` 
+> - Use versioned model names (not old names)
+> - **Model Choice for RAG** (ranked by RAG performance):
+>   - 🥇 **`command-a-03-2025`**: **BEST FOR RAG** - 256K context, explicitly excels at RAG, 150% higher throughput, 8K output
+>   - 🥈 **`command-a-reasoning-08-2025`**: Best for complex RAG - 256K context, 32K output (largest), great for multi-step reasoning
+>   - 🥉 **`command-r-plus-08-2024`**: Proven RAG-optimized - 128K context, specifically designed for RAG
+>   - ⚡ **`command-r7b-12-2024`**: Fast & efficient - 128K context, excels at RAG, smaller/faster
+>   - 💰 **`command-r-08-2024`**: Budget option - 128K context, faster/cheaper
+> - Always use `.env` file for API keys, never hardcode them
 
-For the simple reason that it's free! Well, it's free to prototype with, anyway. And you don't need to enter any payment information. You just need to sign up with GitHub, Google, or your e-mail and you're good to go.
+### Alternative: Generic Pattern
 
-Also, their [`Command-R` and `Command-R-Plus`](https://txt.cohere.com/command-r/) model performs well for RAG tasks.
+If you choose a different provider, the installation and usage pattern is similar:
 
-#### For RAG evaluation we'll make use of OpenAI
+```bash
+pip install llama-index-llms-<provider-name>
+```
 
-It's just faster and easier to do, that's all. 
+```python
+from llama_index.llms.<provider-name> import ProviderLLMClass
+
+llm = ProviderLLMClass(api_key=your_api_key, model="model-name")
+```
+
+## Why We Use Cohere in This Course
+
+**Cohere is our recommended choice** for several reasons:
+
+1. **Free tier available**: No credit card required to get started. Sign up with GitHub, Google, or email.
+2. **Excellent for RAG**: 
+   - **🥇 Command A (`command-a-03-2025`)**: **BEST FOR RAG** - 256K context, explicitly excels at RAG, 150% higher throughput, 8K output tokens
+   - **🥈 Command A Reasoning (`command-a-reasoning-08-2025`)**: Best for complex RAG - 256K context, 32K output (largest), great for multi-step reasoning
+   - **🥉 Command R+ (`command-r-plus-08-2024`)**: Proven RAG-optimized - 128K context, specifically designed for RAG
+   - **⚡ Command R7B (`command-r7b-12-2024`)**: Fast & efficient - 128K context, excels at RAG, smaller/faster
+   - **💰 Command R (`command-r-08-2024`)**: Budget option - 128K context, faster/cheaper
+3. **Quality embeddings**: Cohere's embedding models (`embed-english-v3.0`, `embed-multilingual-v3.0`) are top-tier for semantic search.
+4. **Easy integration**: Simple API and well-documented LlamaIndex integration.
+
+### Getting Your Cohere API Key
+
+1. Sign up at [https://cohere.com](https://cohere.com) (free account)
+2. Navigate to [API Keys](https://dashboard.cohere.com/api-keys)
+3. Create a new API key
+4. Store it securely in your `.env` file as `CO_API_KEY=your-key-here`
+
+### For RAG Evaluation: OpenAI
+
+We'll use OpenAI for evaluation tasks because it's faster and easier for comparison purposes. You can get an OpenAI API key from [platform.openai.com](https://platform.openai.com/api-keys). 
 ---
 
 # But in the "real world," choosing the right large language model (LLM) and embeddings provider for your project requires careful consideration of several factors. 
