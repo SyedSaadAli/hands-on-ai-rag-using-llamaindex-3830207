@@ -19,7 +19,7 @@ As the amount of data grows, the vector database should be able to scale horizon
 
 ## 🔗 Integration with LLM frameworks
 
-The vector database should integrate well with popular LLM orchestration frameworks like LlamaInde, LangChain, or Instructor. This integration allows seamless interaction between the RAG model and the vector database, enabling efficient retrieval and generation.
+The vector database should integrate well with popular LLM orchestration frameworks like LlamaIndex, LangChain, or Instructor. This integration allows seamless interaction between the RAG model and the vector database, enabling efficient retrieval and generation.
 
 ## 🌐 Support for various data types
 
